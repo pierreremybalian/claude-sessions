@@ -87,6 +87,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var localURL: String { "http://localhost:\(port)" }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // A second copy would put a second icon in the menu bar and fight over the
+        // port, so the newcomer steps aside.
+        let id = Bundle.main.bundleIdentifier ?? ""
+        if NSRunningApplication.runningApplications(withBundleIdentifier: id).count > 1 {
+            NSApp.terminate(nil)
+            return
+        }
+
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = statusItem.button {
             button.image = NSImage(systemSymbolName: "clock.arrow.circlepath", accessibilityDescription: "Claude Sessions")
