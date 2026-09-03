@@ -3,7 +3,7 @@ import fs from "node:fs";
 import { router } from "./routes.js";
 import { scan } from "./indexer.js";
 import { DIST_DIR } from "./paths.js";
-import { HOST, PORT, isLoopback, ensureToken } from "./config.js";
+import { HOST, PORT, isLoopback, ensureToken, runtime } from "./config.js";
 import { requireToken } from "./auth.js";
 import { lanAddress, bonjourHost } from "./net.js";
 
@@ -45,6 +45,7 @@ export function createApp({ token = null } = {}) {
 export async function startServer({ host = HOST, port = PORT } = {}) {
   const exposed = !isLoopback(host);
   const token = exposed ? ensureToken() : null;
+  runtime.exposed = exposed;
   const app = createApp({ token });
 
   const server = await new Promise((resolve, reject) => {

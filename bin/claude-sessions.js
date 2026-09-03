@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { execFile } from "node:child_process";
+import net from "node:net";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -65,6 +66,14 @@ if (has("--allow-remote-actions")) process.env.ALLOW_REMOTE_ACTIONS = "1";
 const host = has("--lan") ? "0.0.0.0" : value("--host", process.env.HOST || "127.0.0.1");
 const port = Number(value("--port", process.env.PORT || PORT));
 
+// Node happily binds 0.0.0.0 next to an existing 127.0.0.1 listener on the same
+// port, leaving two servers racing for requests — so probe before binding.
+if (await portAnswers(port)) {
+  console.error(`\n  Something is already listening on port ${port}.`);
+  console.error(`  Open http://localhost:${port}, or stop it first:  pkill -f claude-sessions\n`);
+  process.exit(1);
+}
+
 let info;
 try {
   info = await startServer({ host, port });
@@ -106,4 +115,18 @@ async function printQr(url) {
   } catch {
     // qrcode-terminal is optional; the printed URL is enough on its own.
   }
+}
+
+function portAnswers(port) {
+  return new Promise((resolve) => {
+    const socket = net.connect({ host: "127.0.0.1", port });
+    const done = (answer) => {
+      socket.destroy();
+      resolve(answer);
+    };
+    socket.setTimeout(400);
+    socket.once("connect", () => done(true));
+    socket.once("timeout", () => done(false));
+    socket.once("error", () => done(false));
+  });
 }

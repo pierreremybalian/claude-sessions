@@ -72,6 +72,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var server: Process?
     private var healthTimer: Timer?
     private var isUp = false
+    private var isShared = false   // what the running server actually did, which may
+                                   // be a terminal-started one this app merely adopted
     private var qrWindow: NSWindow?
 
     private var lanMode: Bool {
@@ -91,11 +93,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             button.image?.isTemplate = true
         }
         rebuildMenu()
-        startServer()
+        // A server started from a terminal already owns the port — adopt it rather
+        // than binding a second one alongside it.
+        checkHealth { [weak self] alreadyUp in
+            if !alreadyUp { self?.startServer() }
+        }
         healthTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
             self?.checkHealth()
         }
-        checkHealth()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -117,7 +122,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         share.state = lanMode ? .on : .off
         menu.addItem(share)
 
-        if lanMode {
+        if isShared {
             menu.addItem(item("Copy Link for Another Device", #selector(copyLanLink), key: "c"))
             menu.addItem(item("Show QR Code…", #selector(showQr), key: ""))
         }
@@ -138,7 +143,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func statusLine() -> String {
-        if isUp { return lanMode ? "Running on :\(port) — shared" : "Running on :\(port)" }
+        if isUp { return isShared ? "Running on :\(port) — shared" : "Running on :\(port)" }
         return server == nil ? "Stopped" : "Starting…"
     }
 
@@ -214,16 +219,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// The port may also be held by a server someone started in a terminal — that
     /// still counts as up, and the menu says so rather than fighting over the port.
-    private func checkHealth() {
-        guard let url = URL(string: "\(localURL)/api/health") else { return }
+    private func checkHealth(_ completion: ((Bool) -> Void)? = nil) {
+        guard let url = URL(string: "\(localURL)/api/health") else { completion?(false); return }
         var req = URLRequest(url: url)
         req.timeoutInterval = 2
-        URLSession.shared.dataTask(with: req) { [weak self] _, response, _ in
+        URLSession.shared.dataTask(with: req) { [weak self] data, response, _ in
             let ok = (response as? HTTPURLResponse)?.statusCode == 200
+            var shared = false
+            if ok, let data,
+               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let caps = json["capabilities"] as? [String: Any] {
+                shared = caps["lan"] as? Bool ?? false
+            }
             DispatchQueue.main.async {
-                guard let self, self.isUp != ok else { return }
-                self.isUp = ok
-                self.rebuildMenu()
+                if let self, self.isUp != ok || self.isShared != shared {
+                    self.isUp = ok
+                    self.isShared = shared
+                    self.rebuildMenu()
+                }
+                completion?(ok)
             }
         }.resume()
     }

@@ -27,6 +27,9 @@ export function isLoopbackClient(req) {
   return addr === "127.0.0.1" || addr === "::1" || addr === "::ffff:127.0.0.1";
 }
 
+/** Set once the server binds, so /api/health can report how it was started. */
+export const runtime = { exposed: false };
+
 export function readToken() {
   try {
     const t = fs.readFileSync(TOKEN_FILE, "utf8").trim();

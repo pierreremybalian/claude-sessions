@@ -6,7 +6,7 @@ import { parseTranscript } from "./transcript.js";
 import { searchTranscripts } from "./search.js";
 import { openInTerminal, openInVSCode, cwdExists, resumeCommand } from "./actions.js";
 import { guardRemoteActions } from "./auth.js";
-import { isLoopbackClient, ALLOW_REMOTE_ACTIONS } from "./config.js";
+import { isLoopbackClient, ALLOW_REMOTE_ACTIONS, runtime } from "./config.js";
 
 export const router = express.Router();
 
@@ -22,6 +22,7 @@ router.get("/health", wrap(async (req, res) => {
     scanMs: st.scanMs,
     node: process.version,
     capabilities: {
+      lan: runtime.exposed,
       remote: !isLoopbackClient(req),
       actions: isLoopbackClient(req) || ALLOW_REMOTE_ACTIONS,
     },
