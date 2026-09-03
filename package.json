@@ -1,0 +1,66 @@
+{
+  "name": "claude-sessions",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Browse, search and resume Claude Code sessions across every project folder (terminal + VS Code).",
+  "scripts": {
+    "dev": "concurrently -n server,vite -c blue,magenta \"node bin/claude-sessions.js\" \"vite\"",
+    "start": "node bin/claude-sessions.js",
+    "lan": "node bin/claude-sessions.js --lan",
+    "server": "node server/index.js",
+    "build": "vite build",
+    "prepare": "vite build",
+    "menubar": "bash menubar/build.sh",
+    "menubar:install": "bash menubar/build.sh --install"
+  },
+  "dependencies": {
+    "@vscode/ripgrep": "^1.15.9",
+    "express": "^4.19.2",
+    "marked": "^12.0.2",
+    "qrcode-terminal": "^0.12.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "concurrently": "^8.2.2",
+    "vite": "^5.4.0"
+  },
+  "license": "MIT",
+  "author": "Pierre Balian",
+  "homepage": "https://github.com/pierreremybalian/claude-sessions#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pierreremybalian/claude-sessions.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pierreremybalian/claude-sessions/issues"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "sessions",
+    "transcripts",
+    "cli"
+  ],
+  "os": [
+    "darwin"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "bin": {
+    "claude-sessions": "bin/claude-sessions.js"
+  },
+  "files": [
+    "bin",
+    "server",
+    "src",
+    "dist",
+    "index.html",
+    "vite.config.js",
+    "menubar",
+    "README.md",
+    "LICENSE"
+  ]
+}
