@@ -12,11 +12,14 @@ macOS only — resume drives Terminal.app and VS Code through AppleScript.
 ## Install
 
 ```bash
-npm install -g github:pierreremybalian/claude-sessions
+npm install -g --install-links github:pierreremybalian/claude-sessions
 ```
 
-That puts a `claude-sessions` command on your PATH and builds the UI during install.
-Node 18 or newer.
+That puts a `claude-sessions` command on your PATH. Node 18 or newer.
+
+`--install-links` is not optional: without it npm leaves the package a symlink into a
+temp clone it then deletes, and you get no command at all. The built UI ships in the
+repo, so nothing compiles at install time.
 
 Or work from a checkout:
 
@@ -25,6 +28,12 @@ git clone https://github.com/pierreremybalian/claude-sessions.git
 cd claude-sessions
 npm install
 npm start
+```
+
+To put a checkout behind the global `claude-sessions` command while you work on it:
+
+```bash
+npm link
 ```
 
 ## Run it
@@ -128,7 +137,9 @@ to show what you worked on.
 npm run dev
 ```
 
-API on 5178, Vite with HMR on 5177.
+API on 5178, Vite with HMR on 5177. `npm run build` refreshes `dist/`, which is
+committed — rebuild and commit it whenever the UI changes, or installs will ship a
+stale interface.
 
 State lives in `~/.claude-sessions/`: the access token, the session index cache, and the
 menu bar app's log.
