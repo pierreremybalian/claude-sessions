@@ -9,7 +9,6 @@
     "lan": "node bin/claude-sessions.js --lan",
     "server": "node server/index.js",
     "build": "vite build",
-    "prepare": "vite build || echo \"skipped: no build toolchain (dist/ ships prebuilt)\"",
     "menubar": "bash menubar/build.sh",
     "menubar:install": "bash menubar/build.sh --install"
   },
