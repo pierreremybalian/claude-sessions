@@ -91,6 +91,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // port, so the newcomer steps aside.
         let id = Bundle.main.bundleIdentifier ?? ""
         if NSRunningApplication.runningApplications(withBundleIdentifier: id).count > 1 {
+            NSWorkspace.shared.open(URL(string: localURL)!)
             NSApp.terminate(nil)
             return
         }
@@ -113,6 +114,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         server?.terminate()
+    }
+
+    /// There is no window to raise, so opening the app again means "show me the UI"
+    /// rather than the nothing-at-all an accessory app would otherwise do.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
+        openUI()
+        return true
     }
 
     // MARK: - Menu
@@ -252,7 +260,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Actions
 
-    @objc private func openUI() {
+    @objc func openUI() {
         NSWorkspace.shared.open(URL(string: localURL)!)
     }
 
