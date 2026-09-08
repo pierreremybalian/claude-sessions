@@ -12,6 +12,10 @@ command -v swiftc >/dev/null || {
   exit 1
 }
 
+# Record the node this machine actually uses; a Finder-launched app has no PATH
+# worth speaking of, and nvm installs are invisible to it.
+NODE_BIN="$(command -v node || true)"
+
 rm -rf "$OUT"
 mkdir -p "$OUT/Contents/MacOS" "$OUT/Contents/Resources"
 
@@ -29,6 +33,7 @@ cat > "$OUT/Contents/Info.plist" <<PLIST
   <key>LSMinimumSystemVersion</key><string>13.0</string>
   <key>LSUIElement</key><true/>
   <key>CSInstallRoot</key><string>$ROOT</string>
+  <key>CSNodePath</key><string>$NODE_BIN</string>
 </dict>
 </plist>
 PLIST

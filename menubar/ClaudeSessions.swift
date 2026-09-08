@@ -29,22 +29,70 @@ func installRoot() -> String? {
     return nil
 }
 
-/// Apps launched from Finder inherit a bare PATH, so ask a login shell where node is.
-func nodePath() -> String? {
-    for candidate in ["/opt/homebrew/bin/node", "/usr/local/bin/node", "/usr/bin/node"] {
-        if FileManager.default.isExecutableFile(atPath: candidate) { return candidate }
+func isExecutable(_ path: String) -> Bool {
+    FileManager.default.isExecutableFile(atPath: path)
+}
+
+/// Sort version directories newest first: v20.20.2 above v20.9.0, not below it.
+func sortedNodeVersions(_ names: [String]) -> [String] {
+    names.sorted { a, b in
+        let x = a.dropFirst().split(separator: ".").map { Int($0) ?? 0 }
+        let y = b.dropFirst().split(separator: ".").map { Int($0) ?? 0 }
+        for i in 0..<max(x.count, y.count) {
+            let l = i < x.count ? x[i] : 0
+            let r = i < y.count ? y[i] : 0
+            if l != r { return l > r }
+        }
+        return false
     }
+}
+
+/// nvm is initialised from .zshrc, which only interactive shells read — so a
+/// Finder-launched app never sees its node. Find the install directly instead.
+func nvmNode() -> String? {
+    let base = (NSHomeDirectory() as NSString).appendingPathComponent(".nvm/versions/node")
+    guard let entries = try? FileManager.default.contentsOfDirectory(atPath: base) else { return nil }
+    let versions = sortedNodeVersions(entries.filter { $0.hasPrefix("v") })
+    let binary = { (v: String) in "\(base)/\(v)/bin/node" }
+
+    // Honour the version nvm would pick by default; the alias may be a partial
+    // version ("18") or a full one ("v18.15.0").
+    if let alias = readTrimmed((NSHomeDirectory() as NSString).appendingPathComponent(".nvm/alias/default")) {
+        let wanted = alias.hasPrefix("v") ? alias : "v" + alias
+        if let match = versions.first(where: { $0 == wanted || $0.hasPrefix(wanted + ".") }),
+           isExecutable(binary(match)) {
+            return binary(match)
+        }
+    }
+    return versions.map(binary).first(where: isExecutable)
+}
+
+func shellNode(_ flags: String) -> String? {
     let p = Process()
     p.executableURL = URL(fileURLWithPath: "/bin/zsh")
-    p.arguments = ["-lc", "command -v node"]
+    p.arguments = [flags, "command -v node"]
     let pipe = Pipe()
     p.standardOutput = pipe
     p.standardError = FileHandle.nullDevice
-    try? p.run()
+    guard (try? p.run()) != nil else { return nil }
     let data = pipe.fileHandleForReading.readDataToEndOfFile()
     p.waitUntilExit()
     let out = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-    return out.isEmpty ? nil : out
+    return isExecutable(out) ? out : nil
+}
+
+/// Apps launched from Finder inherit a bare PATH, so node has to be hunted down:
+/// the path recorded at build time, then the usual install locations, then nvm,
+/// then whatever a shell can tell us.
+func nodePath() -> String? {
+    if let baked = Bundle.main.object(forInfoDictionaryKey: "CSNodePath") as? String, isExecutable(baked) {
+        return baked
+    }
+    for candidate in ["/opt/homebrew/bin/node", "/usr/local/bin/node", "/usr/bin/node"] {
+        if isExecutable(candidate) { return candidate }
+    }
+    if let nvm = nvmNode() { return nvm }
+    return shellNode("-lc") ?? shellNode("-ic")
 }
 
 func lanAddress() -> String? {
@@ -175,7 +223,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         guard let node = nodePath() else {
-            warn("Node.js not found.", "Install Node 18 or newer, then restart this app.")
+            warn("Node.js not found.",
+                 "Looked in /opt/homebrew/bin, /usr/local/bin, ~/.nvm and your shell. " +
+                 "Install Node 18 or newer, then rebuild this app with `npm run menubar:install` " +
+                 "so it records the path.")
             return
         }
 
