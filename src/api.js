@@ -9,8 +9,8 @@ async function json(url, opts) {
 let capsPromise = null;
 export function capabilities() {
   capsPromise ||= json("/api/health")
-    .then((h) => h.capabilities || { actions: true, remote: false })
-    .catch(() => ({ actions: true, remote: false }));
+    .then((h) => h.capabilities || { actions: true, remote: false, terminal: "Terminal" })
+    .catch(() => ({ actions: true, remote: false, terminal: "Terminal" }));
   return capsPromise;
 }
 

@@ -4,7 +4,7 @@ import {
 } from "./indexer.js";
 import { parseTranscript } from "./transcript.js";
 import { searchTranscripts } from "./search.js";
-import { openInTerminal, openInVSCode, cwdExists, resumeCommand } from "./actions.js";
+import { openInTerminal, openInVSCode, cwdExists, resumeCommand, preferredTerminal } from "./actions.js";
 import { guardRemoteActions } from "./auth.js";
 import { isLoopbackClient, ALLOW_REMOTE_ACTIONS, runtime } from "./config.js";
 
@@ -22,6 +22,7 @@ router.get("/health", wrap(async (req, res) => {
     scanMs: st.scanMs,
     node: process.version,
     capabilities: {
+      terminal: (await preferredTerminal()).name,
       lan: runtime.exposed,
       remote: !isLoopbackClient(req),
       actions: isLoopbackClient(req) || ALLOW_REMOTE_ACTIONS,

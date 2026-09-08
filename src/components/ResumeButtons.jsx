@@ -3,7 +3,7 @@ import { api, capabilities } from "../api.js";
 
 export default function ResumeButtons({ session, size = "sm", onToast }) {
   const [busy, setBusy] = useState(null);
-  const [caps, setCaps] = useState({ actions: true, remote: false });
+  const [caps, setCaps] = useState({ actions: true, remote: false, terminal: "Terminal" });
 
   useEffect(() => {
     capabilities().then(setCaps);
@@ -19,7 +19,7 @@ export default function ResumeButtons({ session, size = "sm", onToast }) {
         text:
           app === "vscode"
             ? `VS Code opened at ${session.project}${r.copied ? " — resume command copied, paste it in the integrated terminal (Ctrl+\`)" : ""}`
-            : `Terminal opened — resuming in ${session.project}`,
+            : `${r.app} opened — resuming in ${session.project}`,
       });
     } catch (err) {
       onToast?.({ kind: "danger", text: err.message, command: err.body?.command });
@@ -64,9 +64,9 @@ export default function ResumeButtons({ session, size = "sm", onToast }) {
         className="btn btn-outline-success"
         onClick={(e) => launch("terminal", e)}
         disabled={busy === "terminal"}
-        title="Open Terminal.app and resume this session"
+        title={`Open ${caps.terminal} and resume this session`}
       >
-        {busy === "terminal" ? <span className="spinner-border spinner-border-sm" /> : "Terminal"}
+        {busy === "terminal" ? <span className="spinner-border spinner-border-sm" /> : caps.terminal}
       </button>
       <button
         className="btn btn-outline-primary"

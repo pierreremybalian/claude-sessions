@@ -111,14 +111,16 @@ internet.
   ripgrep binary bundled with `@vscode/ripgrep`).
 - **Transcript viewer** — read a session without resuming it. Markdown rendering,
   tool calls collapsed into expandable rows showing input and result.
-- **Resume** — `Terminal` opens a new Terminal.app window in the session's folder
-  running `claude --resume <id>`. `Copy` puts that command on your clipboard.
+- **Resume** — the first button opens a new terminal window in the session's folder
+  running `claude --resume <id>`. It uses iTerm when iTerm is installed and
+  Terminal.app otherwise; `CS_TERMINAL=Terminal` forces the choice. `Copy` puts that
+  command on your clipboard.
 
 ## Two things worth knowing
 
-**First Terminal resume triggers a permission prompt.** macOS asks whether node may
-control Terminal. Approve it once, or find it later under System Settings → Privacy &
-Security → Automation.
+**First resume triggers a permission prompt.** macOS asks whether node may control
+iTerm (or Terminal). Approve it once, or find it later under System Settings → Privacy
+& Security → Automation.
 
 **The VS Code button can't resume inside the extension** — that UI isn't scriptable.
 It opens the folder in VS Code and copies `claude --resume <id>` so you can paste it
